@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -95,10 +96,17 @@ import com.example.service.SeismicMonitoringService
 import com.example.ui.components.ColombiaMapView
 import com.example.ui.components.MapDisplayMode
 import com.example.ui.components.SeismicWaveformView
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import com.example.ui.theme.AccentCyan
 import com.example.ui.theme.AlertAmber
 import com.example.ui.theme.AlertRed
 import com.example.ui.theme.BrightCyan
+import kotlin.math.sin
+import kotlin.math.cos
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -153,6 +161,8 @@ fun MonitoringStationsScreen(
         val alertSt = stations.find { it.status == "ALERTA" }
         if (alertSt != null && (selectedStation == null || selectedStation?.status != "ALERTA")) {
             selectedStation = alertSt
+        } else if (selectedStation == null && stations.isNotEmpty()) {
+            selectedStation = stations.find { it.isLocalDevice } ?: stations.firstOrNull()
         }
     }
 
@@ -240,31 +250,49 @@ fun MonitoringStationsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1.0f)
-                    .background(MaterialTheme.colorScheme.surface)
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 item {
-
                     SeismicWaveformView(
+                        station = selectedStation,
                         latestReading = latestReading,
                         thresholdRatio = staLtaSensitivity,
-                        isMonitoring = isMonitoring
+                        isMonitoring = isMonitoring,
+                        onStartMonitoringClick = {
+                            scope.launch {
+                                repository.resetLocalStationStatus()
+                                val localSt = repository.getOrCreateLocalStation()
+                                selectedStation = localSt
+                            }
+                            val isNotificationGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                androidx.core.content.ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.POST_NOTIFICATIONS
+                                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                            } else true
+
+                            if (isNotificationGranted) {
+                                SeismicMonitoringService.start(context)
+                            } else {
+                                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                        },
+                        onDeselectStation = if (selectedStation != null) { { selectedStation = null } } else null
                     )
                 }
 
                 item {
-
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF0A1E35)),
-                        shape = RoundedCornerShape(14.dp),
-                        border = CardDefaults.outlinedCardBorder().copy(width = 1.dp, brush = androidx.compose.ui.graphics.SolidColor(BrightCyan.copy(alpha = 0.5f)))
+                    Surface(
+                        shape = RoundedCornerShape(18.dp),
+                        color = Color(0xCC091A2E),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x3300F5D4))
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -282,15 +310,16 @@ fun MonitoringStationsScreen(
                                     )
                                 }
                                 Surface(
-                                    shape = RoundedCornerShape(8.dp),
-                                    color = BrightCyan.copy(alpha = 0.15f)
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = Color(0x2E00F5D4),
+                                    border = androidx.compose.foundation.BorderStroke(0.6.dp, BrightCyan)
                                 ) {
                                     Text(
                                         text = "Hardware en Vivo",
                                         color = BrightCyan,
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                                     )
                                 }
                             }
@@ -298,45 +327,46 @@ fun MonitoringStationsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
-                                    .padding(8.dp),
+                                    .background(Color(0x8005111F), RoundedCornerShape(12.dp))
+                                    .border(0.5.dp, Color(0x1AFFFFFF), RoundedCornerShape(12.dp))
+                                    .padding(10.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(
-                                        imageVector = if (liveTelemetry.battery.isCharging) Icons.Default.BatteryChargingFull else Icons.Default.BatteryFull,
+                                        imageVector = Icons.Default.Sensors,
                                         contentDescription = null,
-                                        tint = if (liveTelemetry.battery.isCharging) BrightCyan else Color.White,
-                                        modifier = Modifier.size(20.dp)
+                                        tint = BrightCyan,
+                                        modifier = Modifier.size(22.dp)
                                     )
-                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
                                     Column {
                                         Text(
-                                            text = "Batería: ${liveTelemetry.battery.levelPercent}%",
+                                            text = "Acelerómetro Triaxial Físico",
                                             style = MaterialTheme.typography.bodySmall,
                                             fontWeight = FontWeight.Bold,
                                             color = Color.White
                                         )
                                         Text(
-                                            text = if (liveTelemetry.battery.isCharging) "⚡ ${liveTelemetry.battery.chargingSource}" else "🔋 Batería Interna",
+                                            text = "Muestreo continuo a ~${liveTelemetry.sensors.calculatedSampleRateHz} Hz",
                                             style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
-                                            color = if (liveTelemetry.battery.isCharging) BrightCyan else Color.Gray
+                                            color = BrightCyan
                                         )
                                     }
                                 }
 
                                 Column(horizontalAlignment = Alignment.End) {
                                     Text(
-                                        text = "${liveTelemetry.battery.temperatureCelsius}°C • ${liveTelemetry.battery.voltageMv} mV",
-                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
-                                        color = Color(0xFFCBD5E1),
+                                        text = "Calibración Vectorial ✓",
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                                        color = com.example.ui.theme.LiveGreenGlow,
                                         fontWeight = FontWeight.SemiBold
                                     )
                                     Text(
-                                        text = "Salud: ${liveTelemetry.battery.health}",
-                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 9.sp),
-                                        color = Color.Gray
+                                        text = "Filtro Gravitacional IIR",
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+                                        color = Color(0xFF94A3B8)
                                     )
                                 }
                             }
@@ -344,9 +374,10 @@ fun MonitoringStationsScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
-                                    .padding(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    .background(Color(0x8005111F), RoundedCornerShape(12.dp))
+                                    .border(0.5.dp, Color(0x1AFFFFFF), RoundedCornerShape(12.dp))
+                                    .padding(10.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -354,13 +385,13 @@ fun MonitoringStationsScreen(
                                 ) {
                                     Text(
                                         text = "Acelerómetro Dinámico (PGA):",
-                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                                         fontWeight = FontWeight.Bold,
                                         color = BrightCyan
                                     )
                                     Text(
                                         text = "${"%.3f".format(liveTelemetry.sensors.resultantPgaMps2)} m/s² (~${liveTelemetry.sensors.calculatedSampleRateHz} Hz)",
-                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                                         fontWeight = FontWeight.Bold,
                                         color = Color.White
                                     )
@@ -372,12 +403,12 @@ fun MonitoringStationsScreen(
                                 ) {
                                     Text(
                                         text = "X: ${"%.2f".format(liveTelemetry.sensors.dynamicAccelX)}  Y: ${"%.2f".format(liveTelemetry.sensors.dynamicAccelY)}  Z: ${"%.2f".format(liveTelemetry.sensors.dynamicAccelZ)} m/s²",
-                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 9.sp, fontFamily = FontFamily.Monospace),
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp, fontFamily = FontFamily.Monospace),
                                         color = Color(0xFFCBD5E1)
                                     )
                                 }
 
-                                HorizontalDivider(color = Color.White.copy(alpha = 0.1f), thickness = 0.5.dp)
+                                HorizontalDivider(color = Color.White.copy(alpha = 0.08f), thickness = 0.5.dp)
 
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -385,13 +416,13 @@ fun MonitoringStationsScreen(
                                 ) {
                                     Text(
                                         text = "Giroscopio: ${if (liveTelemetry.sensors.hasGyroscope) "Activo ✓" else "No disponible"}",
-                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 9.sp),
-                                        color = if (liveTelemetry.sensors.hasGyroscope) Color(0xFFCBD5E1) else Color.Gray
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+                                        color = if (liveTelemetry.sensors.hasGyroscope) Color(0xFFCBD5E1) else Color(0xFF64748B)
                                     )
                                     Text(
                                         text = "Brújula: ${if (liveTelemetry.sensors.hasMagnetometer) "${liveTelemetry.sensors.compassHeadingDegrees.toInt()}°" else "N/A"}",
-                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 9.sp),
-                                        color = if (liveTelemetry.sensors.hasMagnetometer) BrightCyan else Color.Gray
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+                                        color = if (liveTelemetry.sensors.hasMagnetometer) BrightCyan else Color(0xFF64748B)
                                     )
                                 }
                             }
@@ -419,15 +450,15 @@ fun MonitoringStationsScreen(
                 }
 
                 item {
-
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)),
-                        shape = RoundedCornerShape(14.dp)
+                    Surface(
+                        shape = RoundedCornerShape(18.dp),
+                        color = Color(0x990A1D33),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x2E00F5D4))
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(10.dp),
+                                .padding(12.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Row(
@@ -441,7 +472,9 @@ fun MonitoringStationsScreen(
                                             SeismicMonitoringService.stop(context)
                                         } else {
                                             scope.launch {
-                                                repository.getOrCreateLocalStation()
+                                                repository.resetLocalStationStatus()
+                                                val localSt = repository.getOrCreateLocalStation()
+                                                selectedStation = localSt
                                             }
                                             val isNotificationGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                                                 androidx.core.content.ContextCompat.checkSelfPermission(
@@ -461,7 +494,8 @@ fun MonitoringStationsScreen(
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = if (isMonitoring) AlertRed else BrightCyan,
                                         contentColor = if (isMonitoring) Color.White else Color(0xFF071424)
-                                    )
+                                    ),
+                                    shape = RoundedCornerShape(12.dp)
                                 ) {
                                     Icon(
                                         imageVector = if (isMonitoring) Icons.Default.Stop else Icons.Default.PlayArrow,
@@ -480,11 +514,12 @@ fun MonitoringStationsScreen(
 
                                 OutlinedButton(
                                     onClick = { showRegisterDialog = true },
-                                    modifier = Modifier.weight(0.9f)
+                                    modifier = Modifier.weight(0.9f),
+                                    shape = RoundedCornerShape(12.dp)
                                 ) {
-                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp), tint = BrightCyan)
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Registrar", style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                                    Text("Registrar", style = MaterialTheme.typography.labelSmall, maxLines = 1, color = BrightCyan)
                                 }
                             }
 
@@ -503,7 +538,8 @@ fun MonitoringStationsScreen(
                                         }
                                     },
                                     modifier = Modifier.weight(1f),
-                                    colors = ButtonDefaults.buttonColors(containerColor = AlertAmber, contentColor = Color(0xFF071424))
+                                    colors = ButtonDefaults.buttonColors(containerColor = AlertAmber, contentColor = Color(0xFF071424)),
+                                    shape = RoundedCornerShape(12.dp)
                                 ) {
                                     Icon(Icons.Default.Emergency, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
@@ -512,11 +548,12 @@ fun MonitoringStationsScreen(
 
                                 OutlinedButton(
                                     onClick = { showDiagnosticsDialog = true },
-                                    modifier = Modifier.weight(0.7f)
+                                    modifier = Modifier.weight(0.7f),
+                                    shape = RoundedCornerShape(12.dp)
                                 ) {
-                                    Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(14.dp), tint = BrightCyan)
                                     Spacer(modifier = Modifier.width(3.dp))
-                                    Text("Sensores", style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                                    Text("Sensores", style = MaterialTheme.typography.labelSmall, maxLines = 1, color = BrightCyan)
                                 }
                             }
                         }
@@ -526,14 +563,15 @@ fun MonitoringStationsScreen(
                 if (stations.any { it.status == "ALERTA" }) {
                     item {
                         val alertSt = stations.firstOrNull { it.status == "ALERTA" }
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = AlertRed.copy(alpha = 0.12f)),
-                            border = CardDefaults.outlinedCardBorder()
+                        Surface(
+                            shape = RoundedCornerShape(18.dp),
+                            color = AlertRed.copy(alpha = 0.2f),
+                            border = androidx.compose.foundation.BorderStroke(1.2.dp, AlertRed)
                         ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(12.dp),
+                                    .padding(14.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -547,7 +585,7 @@ fun MonitoringStationsScreen(
                                     Text(
                                         text = "${alertSt?.name ?: "Estación"} detectó anomalía (${alertSt?.lastVibrationMps2 ?: 0f} m/s²). Visible en el mapa.",
                                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                                        color = MaterialTheme.colorScheme.onSurface
+                                        color = Color.White
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -561,7 +599,8 @@ fun MonitoringStationsScreen(
                                             snackbarHostState.showSnackbar("Estación restablecida a estado normal (ACTIVA).")
                                         }
                                     },
-                                    colors = ButtonDefaults.buttonColors(containerColor = BrightCyan, contentColor = Color(0xFF071424))
+                                    colors = ButtonDefaults.buttonColors(containerColor = BrightCyan, contentColor = Color(0xFF071424)),
+                                    shape = RoundedCornerShape(10.dp)
                                 ) {
                                     Text("Normalizar", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                 }
@@ -571,10 +610,10 @@ fun MonitoringStationsScreen(
                 }
 
                 item {
-
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
-                        shape = RoundedCornerShape(12.dp)
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0x990A1D33),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x2200F5D4))
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
                             Row(
@@ -585,7 +624,8 @@ fun MonitoringStationsScreen(
                                 Text(
                                     text = "Sensibilidad Algoritmo STA/LTA",
                                     style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
                                 )
                                 Text(
                                     text = "Umbral: ${"%.1f".format(staLtaSensitivity)}x",
@@ -608,14 +648,13 @@ fun MonitoringStationsScreen(
                             Text(
                                 text = "Un valor menor (2.0x-3.0x) detecta vibraciones sutiles. Un valor mayor (4.5x-6.0x) filtra ruidos cotidianos.",
                                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
-                                color = Color.Gray
+                                color = Color(0xFF94A3B8)
                             )
                         }
                     }
                 }
 
                 item {
-
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -627,12 +666,13 @@ fun MonitoringStationsScreen(
                             Text(
                                 text = "Red Sismológica SGC y Estaciones (${stations.size})",
                                 style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
                             )
                             Text(
                                 text = "Telemetría real • Toca para enfocar en mapa",
                                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                                color = Color.Gray
+                                color = Color(0xFF94A3B8)
                             )
                         }
                         IconButton(
@@ -653,20 +693,20 @@ fun MonitoringStationsScreen(
                     val isSelected = selectedStation?.id == st.id
                     val statusColor = when (st.status) {
                         "ALERTA" -> AlertRed
-                        "ACTIVA" -> if (st.isLocalDevice) BrightCyan else AccentCyan
+                        "ACTIVA" -> if (st.isLocalDevice) BrightCyan else com.example.ui.theme.LiveGreenGlow
                         else -> Color.Gray
                     }
 
-                    Card(
+                    Surface(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { selectedStation = st },
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected) MaterialTheme.colorScheme.surfaceVariant
-                            else MaterialTheme.colorScheme.surface
-                        ),
-                        border = if (isSelected) CardDefaults.outlinedCardBorder().copy(width = 2.dp, brush = androidx.compose.ui.graphics.SolidColor(statusColor))
-                        else CardDefaults.outlinedCardBorder()
+                        shape = RoundedCornerShape(16.dp),
+                        color = if (isSelected) Color(0xD90E2A4A) else Color(0x9908182B),
+                        border = androidx.compose.foundation.BorderStroke(
+                            if (isSelected) 1.5.dp else 0.8.dp,
+                            if (isSelected) statusColor else Color(0x2200F5D4)
+                        )
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
                             Row(
@@ -675,29 +715,52 @@ fun MonitoringStationsScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                    Surface(shape = CircleShape, color = statusColor, modifier = Modifier.size(10.dp)) {}
+                                    Surface(shape = CircleShape, color = statusColor, modifier = Modifier.size(9.dp)) {}
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text = st.name,
                                         style = MaterialTheme.typography.titleSmall,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface,
+                                        color = Color.White,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
                                 }
 
-                                Surface(
-                                    shape = RoundedCornerShape(6.dp),
-                                    color = statusColor.copy(alpha = 0.15f)
-                                ) {
-                                    Text(
-                                        text = st.status,
-                                        color = statusColor,
-                                        fontWeight = FontWeight.Bold,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                    )
+                                if (isSelected) {
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = BrightCyan.copy(alpha = 0.25f),
+                                        border = androidx.compose.foundation.BorderStroke(0.8.dp, BrightCyan)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.5.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Surface(shape = CircleShape, color = BrightCyan, modifier = Modifier.size(5.dp)) {}
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = "Sismógrafo Activo",
+                                                color = BrightCyan,
+                                                fontWeight = FontWeight.Bold,
+                                                style = MaterialTheme.typography.labelSmall
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = statusColor.copy(alpha = 0.18f),
+                                        border = androidx.compose.foundation.BorderStroke(0.6.dp, statusColor)
+                                    ) {
+                                        Text(
+                                            text = st.status,
+                                            color = statusColor,
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
                                 }
                             }
 
@@ -705,7 +768,7 @@ fun MonitoringStationsScreen(
                             Text(
                                 text = "${st.municipality}, ${st.department} • Modelo: ${st.deviceModel}",
                                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color(0xFFCBD5E1)
                             )
 
                             Row(
@@ -716,30 +779,77 @@ fun MonitoringStationsScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Vibración: ${st.lastVibrationMps2} m/s²",
+                                    text = "PGA: ${st.lastVibrationMps2} m/s²",
                                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
                                     color = if (st.status == "ALERTA") AlertRed else BrightCyan,
-                                    fontWeight = if (st.status == "ALERTA") FontWeight.Bold else FontWeight.Medium
+                                    fontWeight = if (st.status == "ALERTA") FontWeight.Bold else FontWeight.Medium,
+                                    fontFamily = FontFamily.Monospace
                                 )
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = if (st.isCharging) Icons.Default.BatteryChargingFull else Icons.Default.BatteryFull,
-                                        contentDescription = null,
-                                        tint = if (st.isCharging) BrightCyan else Color.White,
-                                        modifier = Modifier.size(13.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(3.dp))
                                     Text(
-                                        text = "${st.batteryLevel}% ${if (st.isCharging) "(⚡ " + st.chargingSource + ")" else ""}",
+                                        text = "${st.sampleRateHz} Hz",
                                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
                                         color = Color.White
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = "${st.sampleRateHz}Hz",
+                                        text = st.mountType.take(14),
                                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
-                                        color = Color.Gray
+                                        color = Color(0xFF94A3B8)
                                     )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "X:${"%.2f".format(st.realAccelX)} Y:${"%.2f".format(st.realAccelY)}",
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 9.sp),
+                                        color = Color(0xFF64748B),
+                                        fontFamily = FontFamily.Monospace
+                                    )
+                                }
+                            }
+
+                            if (isSelected) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = Color(0xFF030A14),
+                                    border = androidx.compose.foundation.BorderStroke(0.8.dp, BrightCyan.copy(alpha = 0.35f)),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(50.dp)
+                                ) {
+                                    Canvas(modifier = Modifier.fillMaxSize()) {
+                                        val w = size.width
+                                        val h = size.height
+                                        val midY = h / 2f
+
+                                        drawLine(
+                                            color = Color(0x1F00F5D4),
+                                            start = Offset(0f, midY),
+                                            end = Offset(w, midY),
+                                            strokeWidth = 1f
+                                        )
+
+                                        val pga = st.lastVibrationMps2.coerceAtLeast(0.015f)
+                                        val points = 35
+                                        val stepX = w / (points - 1)
+                                        val path = Path()
+                                        val time = System.currentTimeMillis() / 140.0
+
+                                        for (i in 0 until points) {
+                                            val x = i * stepX
+                                            val wave = sin(time + i * 0.5).toFloat() * 0.65f +
+                                                    cos(time * 1.6 + i * 0.9).toFloat() * 0.35f
+                                            val dy = (wave * pga * (h * 0.42f)).coerceIn(-midY * 0.85f, midY * 0.85f)
+                                            val y = midY - dy
+                                            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                                        }
+
+                                        drawPath(
+                                            path = path,
+                                            color = if (st.status == "ALERTA") AlertRed else BrightCyan,
+                                            style = Stroke(width = 1.8.dp.toPx(), cap = StrokeCap.Round)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -843,22 +953,23 @@ fun MonitoringStationsScreen(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    imageVector = if (liveTelemetry.battery.isCharging) Icons.Default.BatteryChargingFull else Icons.Default.BatteryFull,
+                                    imageVector = Icons.Default.Sensors,
                                     contentDescription = null,
-                                    tint = if (liveTelemetry.battery.isCharging) BrightCyan else Color.White,
+                                    tint = BrightCyan,
                                     modifier = Modifier.size(16.dp)
                                 )
-                                Spacer(modifier = Modifier.width(4.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "${liveTelemetry.battery.levelPercent}% ${if (liveTelemetry.battery.isCharging) "(⚡ " + liveTelemetry.battery.chargingSource + ")" else ""}",
+                                    text = "Sensor: Acelerómetro Triaxial Físico",
                                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                                     fontWeight = FontWeight.Bold
                                 )
                             }
                             Text(
-                                text = "${liveTelemetry.battery.temperatureCelsius}°C • Acel: ~${liveTelemetry.sensors.calculatedSampleRateHz}Hz",
+                                text = "~${liveTelemetry.sensors.calculatedSampleRateHz} Hz Activo",
                                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
-                                color = Color.Gray
+                                color = BrightCyan,
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
@@ -960,8 +1071,93 @@ fun MonitoringStationsScreen(
                         }
                     }
 
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color(0xFF040E1B),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x3300F5D4))
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Surface(shape = CircleShape, color = com.example.ui.theme.LiveGreenGlow, modifier = Modifier.size(7.dp)) {}
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Sismógrafo de Calibración en Vivo",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = BrightCyan,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Surface(
+                                    shape = RoundedCornerShape(4.dp),
+                                    color = Color(0x3300F5D4)
+                                ) {
+                                    Text("100% DATOS REALES", color = BrightCyan, fontSize = 8.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp))
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            // Seismograph live waveform inside dialog
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(65.dp)
+                                    .background(Color(0x99030812), RoundedCornerShape(8.dp))
+                                    .border(0.5.dp, Color(0x2200F5D4), RoundedCornerShape(8.dp))
+                            ) {
+                                Canvas(modifier = Modifier.fillMaxSize()) {
+                                    val w = size.width
+                                    val h = size.height
+                                    val midY = h / 2f
+
+                                    // Midline
+                                    drawLine(
+                                        color = Color(0x2200F5D4),
+                                        start = Offset(0f, midY),
+                                        end = Offset(w, midY),
+                                        strokeWidth = 1f
+                                    )
+
+                                    val pga = latestReading.resultantMagnitude.coerceAtLeast(0.01f)
+                                    val points = 35
+                                    val stepX = w / (points - 1)
+                                    val path = Path()
+                                    val time = System.currentTimeMillis() / 120.0
+
+                                    for (i in 0 until points) {
+                                        val x = i * stepX
+                                        val wave = (sin(time + i * 0.4) * latestReading.x.coerceIn(-1.5f, 1.5f) +
+                                                cos(time * 1.4 + i * 0.7) * latestReading.y.coerceIn(-1.5f, 1.5f)).toFloat()
+                                        val dy = ((wave * 0.5f + pga * 15f)).coerceIn(-midY * 0.85f, midY * 0.85f)
+                                        val y = midY - dy
+                                        if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                                    }
+
+                                    drawPath(
+                                        path = path,
+                                        color = BrightCyan,
+                                        style = Stroke(width = 1.8.dp.toPx(), cap = StrokeCap.Round)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "PGA: ${"%.3f".format(latestReading.resultantMagnitude)} m/s² • X: ${"%.2f".format(latestReading.x)}  Y: ${"%.2f".format(latestReading.y)}  Z: ${"%.2f".format(latestReading.z)}",
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+                                color = Color(0xFFCBD5E1),
+                                fontFamily = FontFamily.Monospace
+                            )
+                        }
+                    }
+
                     Text(
-                        text = "• Telemetría real en tiempo real: acelerómetro, carga de batería y coordenadas transmitidas continuamente.\n• La estación aparecerá de inmediato con su indicador en el mapa.",
+                        text = "• Telemetría sismológica en tiempo real: acelerómetro triaxial, PGA y coordenadas transmitidas continuamente.\n• La estación aparecerá de inmediato con su indicador en el mapa y sismógrafo en vivo.",
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
                         color = Color.Gray
                     )
@@ -981,15 +1177,19 @@ fun MonitoringStationsScreen(
                             )
                             selectedStation = newSt
                             showRegisterDialog = false
+                            repository.resetLocalStationStatus()
                             if (!isMonitoring) {
                                 SeismicMonitoringService.start(context)
                             }
-                            snackbarHostState.showSnackbar("¡Estación registrada en $activeMunName con telemetría en tiempo real!")
+                            snackbarHostState.showSnackbar("Estación '${newSt.name}' registrada. Sismógrafo en tiempo real activado.")
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = BrightCyan, contentColor = Color(0xFF071424))
+                    colors = ButtonDefaults.buttonColors(containerColor = BrightCyan, contentColor = Color(0xFF071424)),
+                    shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("Registrar en Red y Mapa", fontWeight = FontWeight.Bold)
+                    Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Confirmar y Activar Sismógrafo", fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {

@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -128,13 +129,20 @@ fun CollectionPointsScreen(
                     FilterChip(
                         selected = isSelected,
                         onClick = { selectedPoint = point },
-                        label = { Text(point.city, fontSize = 12.sp) },
+                        label = { Text(point.city, fontSize = 11.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
                         leadingIcon = if (isSelected) {
-                            { Icon(Icons.Default.Place, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                            { Icon(Icons.Default.Place, contentDescription = null, modifier = Modifier.size(15.dp), tint = Color(0xFF040D17)) }
                         } else null,
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = AccentCyan,
-                            selectedLabelColor = Color.White
+                            selectedContainerColor = BrightCyan,
+                            selectedLabelColor = Color(0xFF040D17),
+                            containerColor = Color(0x6608182B),
+                            labelColor = Color(0xFFCBD5E1)
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = isSelected,
+                            borderColor = if (isSelected) BrightCyan else Color(0x2200F5D4)
                         )
                     )
                 }
@@ -167,19 +175,21 @@ fun CollectionPointsScreen(
             ) {
                 Surface(
                     shape = RoundedCornerShape(20.dp),
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                    tonalElevation = 4.dp
+                    color = Color(0xCC071628),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x3300F5D4)),
+                    shadowElevation = 6.dp
                 ) {
                     TextButton(
                         onClick = { showRouteDialog = true },
                         modifier = Modifier.padding(horizontal = 4.dp)
                     ) {
-                        Icon(Icons.Default.AltRoute, contentDescription = null, tint = BrightCyan, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.AltRoute, contentDescription = null, tint = BrightCyan, modifier = Modifier.size(17.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = if (optimizedRouteResult != null) "Ruta (${optimizedRouteResult?.totalDistanceKm} km)" else "Ruta Optimizada",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
+                            color = Color.White,
                             maxLines = 1
                         )
                     }
@@ -187,19 +197,21 @@ fun CollectionPointsScreen(
 
                 Surface(
                     shape = RoundedCornerShape(20.dp),
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                    tonalElevation = 4.dp
+                    color = Color(0xCC071628),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x3300B4D8)),
+                    shadowElevation = 6.dp
                 ) {
                     TextButton(
                         onClick = { showHistoryDialog = true },
                         modifier = Modifier.padding(horizontal = 4.dp)
                     ) {
-                        Icon(Icons.Default.History, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.History, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(17.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "Entregas ($donationCount)",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
+                            color = Color.White,
                             maxLines = 1
                         )
                     }
@@ -208,13 +220,14 @@ fun CollectionPointsScreen(
         }
 
         if (!isMapExpanded) {
-            Card(
+            Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(0.95f),
-                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(8.dp)
+                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                color = Color(0xD9071526),
+                border = androidx.compose.foundation.BorderStroke(0.8.dp, Color(0x2E00F5D4)),
+                shadowElevation = 8.dp
             ) {
             LazyColumn(
                 modifier = Modifier
@@ -231,87 +244,95 @@ fun CollectionPointsScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Surface(
-                                    color = AccentCyan.copy(alpha = 0.2f),
-                                    shape = RoundedCornerShape(6.dp)
+                                    color = Color(0x2E00F5D4),
+                                    shape = RoundedCornerShape(8.dp),
+                                    border = androidx.compose.foundation.BorderStroke(0.5.dp, BrightCyan.copy(alpha = 0.5f))
                                 ) {
                                     Text(
                                         text = selectedPoint.department.uppercase(),
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = AccentCyan,
+                                        color = BrightCyan,
                                         fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "Punto de Recolección",
+                                    text = "Punto Oficial Verificado",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = Color.Gray
+                                    color = Color(0xFF94A3B8)
                                 )
                             }
-                            Spacer(modifier = Modifier.height(2.dp))
+                            Spacer(modifier = Modifier.height(3.dp))
                             Text(
                                 text = selectedPoint.name,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = Color.White
                             )
                         }
 
-                        IconButton(
-                            onClick = {
-                                openGoogleMapsNavigation(
-                                    context,
-                                    selectedPoint.latitude,
-                                    selectedPoint.longitude,
-                                    selectedPoint.name
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color(0x2E00F5D4),
+                            border = androidx.compose.foundation.BorderStroke(0.8.dp, BrightCyan)
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    openGoogleMapsNavigation(
+                                        context,
+                                        selectedPoint.latitude,
+                                        selectedPoint.longitude,
+                                        selectedPoint.name
+                                    )
+                                },
+                                modifier = Modifier.size(42.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Directions,
+                                    contentDescription = "Cómo llegar",
+                                    tint = BrightCyan,
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
-                        ) {
-                            Icon(
-                                Icons.Default.Directions,
-                                contentDescription = "Cómo llegar",
-                                tint = BrightCyan,
-                                modifier = Modifier.size(28.dp)
-                            )
                         }
                     }
                 }
 
                 item {
-
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
-                            .padding(10.dp),
+                            .background(Color(0x8005111F), RoundedCornerShape(14.dp))
+                            .border(0.5.dp, Color(0x1AFFFFFF), RoundedCornerShape(14.dp))
+                            .padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.LocationOn, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.LocationOn, contentDescription = null, tint = BrightCyan, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = selectedPoint.address,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = Color.White
                             )
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Schedule, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Schedule, contentDescription = null, tint = Color(0xFF94A3B8), modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = selectedPoint.openingHours,
                                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color(0xFFCBD5E1)
                             )
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Phone, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Phone, contentDescription = null, tint = Color(0xFF94A3B8), modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Tel: ${selectedPoint.contactPhone} • ${selectedPoint.officeUnit}",
                                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color(0xFF94A3B8)
                             )
                         }
                     }

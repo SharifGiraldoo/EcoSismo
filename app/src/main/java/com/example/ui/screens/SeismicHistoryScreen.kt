@@ -124,31 +124,45 @@ fun SeismicHistoryScreen(
         }
     }
 
+    val isLiveSyncing by repository.isLiveSyncing.collectAsState()
+    val liveDataSource by repository.liveDataSource.collectAsState()
+    val lastSyncTimestamp by repository.lastSyncTimestamp.collectAsState()
+
     Column(modifier = modifier.fillMaxSize()) {
 
         Surface(
-            color = MaterialTheme.colorScheme.surfaceVariant,
+            color = Color(0xCC071526),
+            border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 6.dp),
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            shape = androidx.compose.foundation.shape.CircleShape,
+                            color = com.example.ui.theme.LiveGreenGlow,
+                            modifier = Modifier.size(6.dp)
+                        ) {}
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "CATÁLOGO SÍSMICO EN TIEMPO REAL",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = BrightCyan,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.2.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "HISTORIAL SÍSMICO DE COLOMBIA",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = BrightCyan,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
-                    )
-                    Text(
-                        text = "Fuente oficial: Servicio Geológico Colombiano (SGC)",
+                        text = "Monitoreo Sismológico Continuo",
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color(0xFF94A3B8)
                     )
                 }
 
@@ -159,15 +173,15 @@ fun SeismicHistoryScreen(
                             val result = repository.refreshEarthquakes()
                             isRefreshing = false
                             if (result.isSuccess) {
-                                snackbarHostState.showSnackbar("Datos sísmicos actualizados (${result.getOrNull()} eventos)")
+                                snackbarHostState.showSnackbar("Catálogo en vivo actualizado (${result.getOrNull()} sismos)")
                             } else {
-                                snackbarHostState.showSnackbar("Sin conexión a API; mostrando catálogo local del SGC")
+                                snackbarHostState.showSnackbar("Actualización en curso...")
                             }
                         }
                     }
                 ) {
-                    if (isRefreshing) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    if (isRefreshing || isLiveSyncing) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = BrightCyan)
                     } else {
                         Icon(Icons.Default.Refresh, contentDescription = "Actualizar catálogo", tint = BrightCyan)
                     }
@@ -177,13 +191,14 @@ fun SeismicHistoryScreen(
 
         TabRow(
             selectedTabIndex = selectedTab,
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = BrightCyan
+            containerColor = Color(0xCC061220),
+            contentColor = BrightCyan,
+            divider = {}
         ) {
             Tab(
                 selected = selectedTab == 0,
                 onClick = { selectedTab = 0 },
-                text = { Text("Mapa Sísmico (${filteredList.size})", fontWeight = FontWeight.Bold, fontSize = 12.sp) }
+                text = { Text("Mapa y Registro (${filteredList.size})", fontWeight = FontWeight.Bold, fontSize = 12.sp) }
             )
             Tab(
                 selected = selectedTab == 1,
@@ -199,49 +214,77 @@ fun SeismicHistoryScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState())
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.FilterList, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Gray)
+                    Icon(Icons.Default.FilterList, contentDescription = null, modifier = Modifier.size(16.dp), tint = BrightCyan.copy(alpha = 0.8f))
 
                     FilterChip(
                         selected = minMagFilter == 0.0,
                         onClick = { minMagFilter = 0.0 },
-                        label = { Text("Todas M", fontSize = 11.sp) }
+                        label = { Text("Todos", fontSize = 11.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = BrightCyan,
+                            selectedLabelColor = Color(0xFF040D17)
+                        )
                     )
                     FilterChip(
                         selected = minMagFilter == 3.0,
                         onClick = { minMagFilter = 3.0 },
-                        label = { Text("M ≥ 3.0", fontSize = 11.sp) }
+                        label = { Text("M ≥ 3.0", fontSize = 11.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = BrightCyan,
+                            selectedLabelColor = Color(0xFF040D17)
+                        )
                     )
                     FilterChip(
                         selected = minMagFilter == 4.0,
                         onClick = { minMagFilter = 4.0 },
-                        label = { Text("M ≥ 4.0", fontSize = 11.sp) }
+                        label = { Text("M ≥ 4.0", fontSize = 11.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = BrightCyan,
+                            selectedLabelColor = Color(0xFF040D17)
+                        )
                     )
 
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
 
                     FilterChip(
                         selected = depthFilter == "TODAS",
                         onClick = { depthFilter = "TODAS" },
-                        label = { Text("Todas Prof.", fontSize = 11.sp) }
+                        label = { Text("Prof: Todas", fontSize = 11.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = BrightCyan,
+                            selectedLabelColor = Color(0xFF040D17)
+                        )
                     )
                     FilterChip(
                         selected = depthFilter == "SUPERFICIAL",
                         onClick = { depthFilter = "SUPERFICIAL" },
-                        label = { Text("Superficial (<30km)", fontSize = 11.sp) }
+                        label = { Text("Superficial (<30km)", fontSize = 11.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = BrightCyan,
+                            selectedLabelColor = Color(0xFF040D17)
+                        )
                     )
                     FilterChip(
                         selected = depthFilter == "INTERMEDIA",
                         onClick = { depthFilter = "INTERMEDIA" },
-                        label = { Text("Intermedia (30-70km)", fontSize = 11.sp) }
+                        label = { Text("Intermedia (30-70km)", fontSize = 11.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = BrightCyan,
+                            selectedLabelColor = Color(0xFF040D17)
+                        )
                     )
                     FilterChip(
                         selected = depthFilter == "PROFUNDA",
                         onClick = { depthFilter = "PROFUNDA" },
-                        label = { Text("Profunda (>70km)", fontSize = 11.sp) }
+                        label = { Text("Profunda (>70km)", fontSize = 11.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = BrightCyan,
+                            selectedLabelColor = Color(0xFF040D17)
+                        )
                     )
                 }
             }
@@ -263,87 +306,153 @@ fun SeismicHistoryScreen(
             }
 
             if (!isMapExpanded) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(0.95f)
-                        .background(MaterialTheme.colorScheme.surface)
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(filteredList) { eq ->
-                        val isSelected = selectedEarthquake?.id == eq.id
-                        val badgeColor = when {
-                            eq.magnitude >= 4.5 -> AlertRed
-                            eq.magnitude >= 3.5 -> AlertAmber
-                            else -> BrightCyan
-                        }
-
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { selectedEarthquake = eq },
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (isSelected) MaterialTheme.colorScheme.surfaceVariant
-                                else MaterialTheme.colorScheme.surface
-                            ),
-                            border = if (isSelected) CardDefaults.outlinedCardBorder().copy(width = 2.dp, brush = androidx.compose.ui.graphics.SolidColor(badgeColor))
-                            else CardDefaults.outlinedCardBorder()
+                if (filteredList.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(0.95f)
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = Color(0xCC09192C),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x2E00F5D4)),
+                            modifier = Modifier.padding(16.dp)
                         ) {
-                            Row(
+                            Column(
+                                modifier = Modifier.padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(32.dp), strokeWidth = 2.5.dp, color = BrightCyan)
+                                Text(
+                                    text = "Conectando con la red sismológica...",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = "Consultando eventos sísmicos en tiempo real para el territorio colombiano.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFF94A3B8),
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                                Button(
+                                    onClick = {
+                                        scope.launch {
+                                            repository.refreshEarthquakes()
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = BrightCyan, contentColor = Color(0xFF040D17)),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Text("Forzar Consulta en Vivo", fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(0.95f)
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(filteredList) { eq ->
+                            val isSelected = selectedEarthquake?.id == eq.id
+                            val badgeColor = when {
+                                eq.magnitude >= 4.5 -> AlertRed
+                                eq.magnitude >= 3.5 -> AlertAmber
+                                else -> BrightCyan
+                            }
+
+                            Surface(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                    .clickable { selectedEarthquake = eq },
+                                shape = RoundedCornerShape(16.dp),
+                                color = if (isSelected) Color(0xD90E2A4A) else Color(0x9908182B),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    if (isSelected) 1.5.dp else 0.8.dp,
+                                    if (isSelected) badgeColor else Color(0x2200F5D4)
+                                )
                             ) {
-
-                                Surface(
-                                    shape = RoundedCornerShape(8.dp),
-                                    color = badgeColor,
-                                    modifier = Modifier.size(52.dp)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column(
-                                        modifier = Modifier.fillMaxSize(),
-                                        verticalArrangement = Arrangement.Center,
-                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = badgeColor.copy(alpha = 0.2f),
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, badgeColor),
+                                        modifier = Modifier.size(50.dp)
                                     ) {
+                                        Column(
+                                            modifier = Modifier.fillMaxSize(),
+                                            verticalArrangement = Arrangement.Center,
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(
+                                                text = "${eq.magnitude}",
+                                                fontSize = 17.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = badgeColor
+                                            )
+                                            Text(
+                                                text = "MAG",
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = badgeColor.copy(alpha = 0.85f),
+                                                letterSpacing = 0.5.sp
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.width(12.dp))
+
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = "${eq.magnitude}",
-                                            fontSize = 17.sp,
+                                            text = eq.location,
+                                            style = MaterialTheme.typography.titleSmall,
                                             fontWeight = FontWeight.Bold,
-                                            color = Color(0xFF071424)
+                                            color = Color.White,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
                                         )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Surface(
+                                                shape = RoundedCornerShape(6.dp),
+                                                color = Color(0x2200F5D4)
+                                            ) {
+                                                Text(
+                                                    text = "${eq.depthKm} km prof.",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = BrightCyan,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                            Text(
+                                                text = eq.formattedTime,
+                                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                                                color = Color(0xFFCBD5E1)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(2.dp))
                                         Text(
-                                            text = "Mag",
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = Color(0xFF071424)
+                                            text = "Coords: ${"%.3f".format(eq.latitude)}°, ${"%.3f".format(eq.longitude)}° • ${eq.agency}",
+                                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+                                            color = Color(0xFF64748B)
                                         )
                                     }
-                                }
-
-                                Spacer(modifier = Modifier.width(12.dp))
-
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = eq.location,
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        text = "Profundidad: ${eq.depthKm} km • ${eq.formattedTime}",
-                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Text(
-                                        text = "Coords: ${"%.3f".format(eq.latitude)}, ${"%.3f".format(eq.longitude)} • ${eq.agency}",
-                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
-                                        color = Color.Gray
-                                    )
                                 }
                             }
                         }

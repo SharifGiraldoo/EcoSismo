@@ -1,7 +1,8 @@
 package com.example.ui.screens
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.Image
+
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,7 +12,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -21,8 +21,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.HelpOutline
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Recycling
 import androidx.compose.material.icons.filled.Sensors
@@ -31,7 +29,6 @@ import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.Recycling
 import androidx.compose.material.icons.outlined.Sensors
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,6 +42,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -56,17 +54,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.EcoSismoApp
-import com.example.R
 import com.example.ui.components.OfflineStatusBar
 import com.example.ui.theme.AccentCyan
-import com.example.ui.theme.AlertAmber
 import com.example.ui.theme.BrightCyan
+import com.example.ui.theme.LiveGreenGlow
 import com.example.ui.theme.PrimaryNavy
 import kotlinx.coroutines.launch
 
@@ -95,6 +92,8 @@ fun MainScreen(
     val isSyncing by app.syncRepository.isSyncing.collectAsState()
     var pendingCount by remember { mutableIntStateOf(0) }
 
+
+
     remember(isOnline, isSyncing) {
         scope.launch {
             pendingCount = app.syncRepository.getPendingCount()
@@ -106,105 +105,136 @@ fun MainScreen(
     }
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color(0xFF050E17),
+                        Color(0xFF081728),
+                        Color(0xFF0C1F35)
+                    )
+                )
+            ),
+        containerColor = Color.Transparent,
         topBar = {
-            Column {
-                CenterAlignedTopAppBar(
-                    title = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                shape = CircleShape,
-                                color = BrightCyan,
-                                modifier = Modifier.size(30.dp)
+            Surface(
+                color = Color(0xCC050E1A),
+                border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f))
+            ) {
+                Column {
+                    TopAppBar(
+                        title = {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Start
                             ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = Icons.Default.Vibration,
-                                        contentDescription = null,
-                                        tint = PrimaryNavy,
-                                        modifier = Modifier.size(18.dp)
+                                Surface(
+                                    shape = CircleShape,
+                                    color = BrightCyan,
+                                    shadowElevation = 4.dp,
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Default.Vibration,
+                                            contentDescription = null,
+                                            tint = PrimaryNavy,
+                                            modifier = Modifier.size(19.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column(horizontalAlignment = Alignment.Start) {
+                                    Text(
+                                        text = "Ecosismo",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = "Red Móvil Circular de Alerta Temprana",
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+                                        color = BrightCyan
                                     )
                                 }
                             }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    text = "Ecosismo",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onPrimary
-                                )
-                                Text(
-                                    text = "Red Móvil Circular de Alerta Temprana",
-                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
-                                    color = BrightCyan
+                        },
+                        actions = {
+                            IconButton(onClick = { showAboutDialog = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.HelpOutline,
+                                    contentDescription = "Información del Reto",
+                                    tint = BrightCyan.copy(alpha = 0.85f)
                                 )
                             }
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { showAboutDialog = true }) {
-                            Icon(
-                                imageVector = Icons.Default.HelpOutline,
-                                contentDescription = "Información del Reto",
-                                tint = Color.White
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = PrimaryNavy,
-                        titleContentColor = Color.White
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.Transparent,
+                            titleContentColor = Color.White
+                        )
                     )
-                )
 
-                OfflineStatusBar(
-                    isOnline = isOnline,
-                    isSyncing = isSyncing,
-                    pendingCount = pendingCount,
-                    onSyncClick = {
-                        scope.launch {
-                            val report = app.syncRepository.syncPendingData()
-                            pendingCount = app.syncRepository.getPendingCount()
-                            snackbarHostState.showSnackbar(report.message)
+                    OfflineStatusBar(
+                        isOnline = isOnline,
+                        isSyncing = isSyncing,
+                        pendingCount = pendingCount,
+                        onSyncClick = {
+                            scope.launch {
+                                val report = app.syncRepository.syncPendingData()
+                                pendingCount = app.syncRepository.getPendingCount()
+                                snackbarHostState.showSnackbar(report.message)
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
         },
         bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 6.dp,
-                modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 8.dp)
+                    .windowInsetsPadding(WindowInsets.navigationBars),
+                shape = RoundedCornerShape(26.dp),
+                color = Color(0xEB071728),
+                border = BorderStroke(1.dp, BrightCyan.copy(alpha = 0.22f)),
+                shadowElevation = 12.dp
             ) {
-                MainNavigationTab.entries.forEachIndexed { index, tab ->
-                    val isSelected = currentTab == index
-                    NavigationBarItem(
-                        selected = isSelected,
-                        onClick = { currentTab = index },
-                        icon = {
-                            Icon(
-                                imageVector = if (isSelected) tab.selectedIcon else tab.unselectedIcon,
-                                contentDescription = tab.title
+                NavigationBar(
+                    containerColor = Color.Transparent,
+                    tonalElevation = 0.dp
+                ) {
+                    MainNavigationTab.entries.forEachIndexed { index, tab ->
+                        val isSelected = currentTab == index
+                        NavigationBarItem(
+                            selected = isSelected,
+                            onClick = { currentTab = index },
+                            icon = {
+                                Icon(
+                                    imageVector = if (isSelected) tab.selectedIcon else tab.unselectedIcon,
+                                    contentDescription = tab.title
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = tab.title,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    fontSize = 10.sp,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color(0xFF040D17),
+                                selectedTextColor = BrightCyan,
+                                indicatorColor = BrightCyan,
+                                unselectedIconColor = Color(0xFF8899A6),
+                                unselectedTextColor = Color(0xFF8899A6)
                             )
-                        },
-                        label = {
-                            Text(
-                                text = tab.title,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                fontSize = 10.sp,
-                                maxLines = 1,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                            )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = PrimaryNavy,
-                            selectedTextColor = AccentCyan,
-                            indicatorColor = BrightCyan,
-                            unselectedIconColor = Color.Gray,
-                            unselectedTextColor = Color.Gray
                         )
-                    )
+                    }
                 }
             }
         },
@@ -235,14 +265,17 @@ fun MainScreen(
     if (showAboutDialog) {
         AlertDialog(
             onDismissRequest = { showAboutDialog = false },
+            containerColor = Color(0xF2081A2C),
+            shape = RoundedCornerShape(24.dp),
             icon = {
-                Icon(Icons.Default.Info, contentDescription = null, tint = BrightCyan, modifier = Modifier.size(32.dp))
+                Icon(Icons.Default.Vibration, contentDescription = null, tint = BrightCyan, modifier = Modifier.size(34.dp))
             },
             title = {
                 Text(
                     text = "Reto 2: Sensores al Servicio de la Comunidad",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
             },
             text = {
@@ -250,24 +283,23 @@ fun MainScreen(
                     Text(
                         text = "Propuesta: Red Móvil Circular de Alerta Temprana mediante reutilización de teléfonos celulares en desuso en municipios vulnerables de Colombia.",
                         style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFFE2E8F0)
                     )
                     Text(
-                        text = "• Fase 1 & 2: Puntos de recolección en las alcaldías de 10 ciudades (Armenia, Pereira, Cali, Medellín, Ibagué, Manizales, Bogotá, Bucaramanga, Quibdó y Neiva) coordinadas con Secretarías de Gobierno.\n" +
-                                "• Fase 3: Reacondicionamiento de sensores integrados (acelerómetros, giroscopios, magnetómetros).\n" +
-                                "• Fase 4: Despliegue de estaciones de monitoreo sísmico con algoritmo STA/LTA y persistencia offline segura en Room.\n\n" +
-                                "Aviso importante: Esta solución comunitaria complementa, pero NO reemplaza los sistemas oficiales del Servicio Geológico Colombiano (SGC) y UNGRD.",
+                        text = "• Telemetría en tiempo real obtenida del Servicio Geológico Colombiano (SGC), USGS, EMSC, FDSN y sensores físicos del teléfono.\n" +
+                                "• Sin datos simulados: todas las lecturas de aceleración, coordenadas y catálogo sísmico reflejan eventos y sensores reales.\n" +
+                                "• Puntos de recolección en alcaldías y Secretarías de Gobierno para economía circular y reacondicionamiento comunal.",
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color(0xFF94A3B8)
                     )
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showAboutDialog = false }) {
-                    Text("Cerrar", fontWeight = FontWeight.Bold)
+                    Text("Cerrar", fontWeight = FontWeight.Bold, color = BrightCyan)
                 }
             }
         )
     }
 }
-
