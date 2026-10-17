@@ -28,11 +28,12 @@ class EcoSismoApp : Application() {
 
         applicationScope.launch {
             try {
-
                 stationRepository.seedInitialCommunityStations()
-                seismicRepository.ensureDefaultCatalog()
-
                 seismicRepository.refreshEarthquakes()
+                stationRepository.syncStationsFromFdsnApi()
+
+                seismicRepository.start247LiveMonitoring(applicationScope)
+                stationRepository.start247TelemetryMonitoring(applicationScope)
             } catch (e: Exception) {
                 android.util.Log.e("EcoSismoApp", "Initialization background task error", e)
             }
@@ -44,4 +45,3 @@ class EcoSismoApp : Application() {
             private set
     }
 }
-
