@@ -8,7 +8,7 @@
 
 Solución propuesta para el **Rally Latinoamericano de Innovación 2026**
 
-![Android](https://img.shields.io/badge/Plataforma-Android-3DDC84?logo=android&logoColor=white)
+
 ![Kotlin DSL](https://img.shields.io/badge/Build-Gradle%20Kotlin%20DSL-02303A?logo=gradle&logoColor=white)
 ![Estado](https://img.shields.io/badge/Estado-Prototipo-orange)
 
