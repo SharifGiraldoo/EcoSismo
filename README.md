@@ -85,7 +85,7 @@ La mayoría de estos estudios depende de **celulares que viajan dentro de vehíc
 - 📍 **"Cómo llegar"** a cada punto mediante integración con Google Maps.
 - 📊 **Historial sísmico de Colombia**: magnitud, profundidad y ubicación de los eventos.
 - 🏛️ **Visor oficial del SGC** (Servicio Geológico Colombiano) integrado en la app.
-- 📡 **Modo estación**: los celulares recolectados se instalan como estaciones fijas que miden vibraciones con **acelerómetro y giroscopio** y envían los datos por **Wi-Fi o datos móviles**.
+- 📡 **Modo estación**: los celulares recolectados se instalan como estaciones fijas que miden vibraciones con **acelerómetro y giroscopio** y envían los datos por **Wi-Fi, datos móviles, conexión satelital y GPRS**.
 - 📴 **Funcionamiento offline** para las consultas principales.
 
 ---
