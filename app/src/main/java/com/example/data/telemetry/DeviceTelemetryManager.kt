@@ -108,6 +108,7 @@ class DeviceTelemetryManager(private val context: Context) : SensorEventListener
     private var gravX = 0f
     private var gravY = 0f
     private var gravZ = 9.8f
+    private var isGravInitialized = false
     private val filterAlpha = 0.8f
 
     private var lastAccelSampleTimeNs: Long = 0
@@ -182,19 +183,30 @@ class DeviceTelemetryManager(private val context: Context) : SensorEventListener
                 currentRawAccelY = event.values[1]
                 currentRawAccelZ = event.values[2]
 
-                gravX = filterAlpha * gravX + (1 - filterAlpha) * currentRawAccelX
-                gravY = filterAlpha * gravY + (1 - filterAlpha) * currentRawAccelY
-                gravZ = filterAlpha * gravZ + (1 - filterAlpha) * currentRawAccelZ
+                if (!isGravInitialized) {
+                    gravX = currentRawAccelX
+                    gravY = currentRawAccelY
+                    gravZ = currentRawAccelZ
+                    isGravInitialized = true
+                    currentDynAccelX = 0f
+                    currentDynAccelY = 0f
+                    currentDynAccelZ = 0f
+                    currentPga = 0.01f
+                } else {
+                    gravX = filterAlpha * gravX + (1 - filterAlpha) * currentRawAccelX
+                    gravY = filterAlpha * gravY + (1 - filterAlpha) * currentRawAccelY
+                    gravZ = filterAlpha * gravZ + (1 - filterAlpha) * currentRawAccelZ
 
-                currentDynAccelX = currentRawAccelX - gravX
-                currentDynAccelY = currentRawAccelY - gravY
-                currentDynAccelZ = currentRawAccelZ - gravZ
+                    currentDynAccelX = currentRawAccelX - gravX
+                    currentDynAccelY = currentRawAccelY - gravY
+                    currentDynAccelZ = currentRawAccelZ - gravZ
 
-                currentPga = sqrt(
-                    currentDynAccelX * currentDynAccelX +
-                            currentDynAccelY * currentDynAccelY +
-                            currentDynAccelZ * currentDynAccelZ
-                )
+                    currentPga = sqrt(
+                        currentDynAccelX * currentDynAccelX +
+                                currentDynAccelY * currentDynAccelY +
+                                currentDynAccelZ * currentDynAccelZ
+                    )
+                }
             }
             Sensor.TYPE_GYROSCOPE -> {
                 currentGyroX = event.values[0]
