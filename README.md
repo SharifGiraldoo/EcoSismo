@@ -32,7 +32,7 @@ Solución propuesta para el **Rally Latinoamericano de Innovación 2026**
 - [Diferenciador](#-diferenciador)
 - [Instalación](#-instalación)
 - [Estructura del repositorio](#-estructura-del-repositorio)
-- [Referencias](#-referencias)
+
 
 ---
 
