@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Ecosismo</string>
+    <string name="default_web_client_id" translatable="false">134089299392-9va7dgt9jg9rlrnavh1vvm7ckov2g7en.apps.googleusercontent.com</string>
 </resources>

@@ -28,11 +28,17 @@ import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.Recycling
 import androidx.compose.material.icons.outlined.Sensors
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.CloudQueue
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -87,6 +93,9 @@ fun MainScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var currentTab by remember { mutableIntStateOf(0) }
     var showAboutDialog by remember { mutableStateOf(false) }
+    val firebaseSync = app.firebaseSyncRepository
+    val currentUser by firebaseSync.currentUser.collectAsStateWithLifecycle()
+    var showFirebaseDialog by remember { mutableStateOf(false) }
 
     val isOnline by app.syncRepository.isOnline.collectAsState()
     val isSyncing by app.syncRepository.isSyncing.collectAsState()
@@ -162,6 +171,13 @@ fun MainScreen(
                             }
                         },
                         actions = {
+                            IconButton(onClick = { showFirebaseDialog = true }) {
+                                Icon(
+                                    imageVector = if (currentUser != null) Icons.Default.CloudDone else Icons.Default.CloudQueue,
+                                    contentDescription = "Firebase Firestore Cloud",
+                                    tint = if (currentUser != null) com.example.ui.theme.LiveGreenGlow else BrightCyan
+                                )
+                            }
                             IconButton(onClick = { showAboutDialog = true }) {
                                 Icon(
                                     imageVector = Icons.Default.HelpOutline,
@@ -297,6 +313,106 @@ fun MainScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showAboutDialog = false }) {
+                    Text("Cerrar", fontWeight = FontWeight.Bold, color = BrightCyan)
+                }
+            }
+        )
+    }
+
+    if (showFirebaseDialog) {
+        AlertDialog(
+            onDismissRequest = { showFirebaseDialog = false },
+            containerColor = Color(0xF2081A2C),
+            shape = RoundedCornerShape(24.dp),
+            icon = {
+                Icon(
+                    imageVector = if (currentUser != null) Icons.Default.CloudDone else Icons.Default.CloudQueue,
+                    contentDescription = null,
+                    tint = if (currentUser != null) com.example.ui.theme.LiveGreenGlow else BrightCyan,
+                    modifier = Modifier.size(34.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = "Firebase Firestore Cloud",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color(0x66020B16),
+                        border = BorderStroke(0.6.dp, Color(0x3300F5D4))
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Base de Datos Activa:", fontSize = 10.sp, color = Color(0xFF94A3B8))
+                            Text("gen-lang-client-0618940609", fontSize = 11.sp, color = BrightCyan, fontWeight = FontWeight.Bold)
+                            Text("Colecciones: /monitoring_stations, /users, /seismic_logs", fontSize = 9.5.sp, color = Color(0xFFCBD5E1))
+                        }
+                    }
+
+                    if (currentUser != null) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color(0x2600F5D4),
+                            border = BorderStroke(0.8.dp, BrightCyan)
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                Text("Usuario: ${currentUser?.displayName ?: "Usuario EcoSismo"}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                Text("Email: ${currentUser?.email ?: ""}", fontSize = 11.sp, color = BrightCyan)
+                                Text("UID: ${currentUser?.uid?.take(14)}...", fontSize = 10.sp, color = Color(0xFF94A3B8))
+                                Text("✓ Conexión en la nube establecida y datos guardados", fontSize = 11.sp, color = com.example.ui.theme.LiveGreenGlow, fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        Button(
+                            onClick = {
+                                firebaseSync.signOut()
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Sesión en la nube cerrada.")
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0x40E63946), contentColor = Color(0xFFFF8585)),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Cerrar Sesión")
+                        }
+                    } else {
+                        Text(
+                            text = "Inicia sesión con Google para sincronizar tus estaciones celulares y reportes sísmicos en tiempo real en la nube de Firebase Firestore.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFFCBD5E1)
+                        )
+
+                        Button(
+                            onClick = {
+                                scope.launch {
+                                    val result = firebaseSync.signInWithGoogle()
+                                    result.onSuccess { user ->
+                                        showFirebaseDialog = false
+                                        snackbarHostState.showSnackbar("Conectado con ${user.displayName ?: user.email} en Firebase.")
+                                    }.onFailure { err ->
+                                        snackbarHostState.showSnackbar("Google Sign-In: ${err.message ?: "Cancelado"}")
+                                    }
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = BrightCyan, contentColor = Color(0xFF071424)),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(Icons.Default.AccountCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Iniciar Sesión con Google", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showFirebaseDialog = false }) {
                     Text("Cerrar", fontWeight = FontWeight.Bold, color = BrightCyan)
                 }
             }

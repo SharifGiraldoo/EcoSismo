@@ -21,6 +21,7 @@ class EcoSismoApp : Application() {
     val deviceTelemetryManager by lazy { com.example.data.telemetry.DeviceTelemetryManager(this) }
     val stationRepository by lazy { StationRepository(this, database.stationDao(), database.alertDao(), deviceTelemetryManager) }
     val syncRepository by lazy { SyncRepository(this, database.donationDao(), database.alertDao(), applicationScope) }
+    val firebaseSyncRepository by lazy { com.example.data.firebase.FirebaseSyncRepository(this, applicationScope) }
 
     override fun onCreate() {
         super.onCreate()

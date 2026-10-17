@@ -1,0 +1,65 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Datos de usuario autenticado en EcoSismo",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "registeredAt": { "type": "string" }
+      },
+      "required": ["userId", "email"]
+    },
+    "MonitoringStation": {
+      "title": "MonitoringStation",
+      "description": "Estación de monitoreo sísmico registrada en la nube",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "municipality": { "type": "string" },
+        "department": { "type": "string" },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" },
+        "deviceModel": { "type": "string" },
+        "status": { "type": "string" },
+        "lastVibrationMps2": { "type": "number" },
+        "sampleRateHz": { "type": "integer" },
+        "mountType": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "municipality", "department", "latitude", "longitude", "ownerId"]
+    },
+    "SeismicLog": {
+      "title": "SeismicLog",
+      "description": "Registro de eventos o lecturas de telemetría sísmica reportada",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "stationId": { "type": "string" },
+        "pgaMps2": { "type": "number" },
+        "status": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "stationId", "pgaMps2", "userId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Perfiles de usuarios de la red sísmica"
+    },
+    "/monitoring_stations/{stationId}": {
+      "schema": { "$ref": "#/entities/MonitoringStation" },
+      "description": "Estaciones de monitoreo sísmico sincronizadas en la nube"
+    },
+    "/seismic_logs/{logId}": {
+      "schema": { "$ref": "#/entities/SeismicLog" },
+      "description": "Lecturas y reportes de anomalías sísmicas en tiempo real"
+    }
+  }
+}
