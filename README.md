@@ -12,6 +12,10 @@ Solución propuesta para el **Rally Latinoamericano de Innovación 2026**
 ![Kotlin DSL](https://img.shields.io/badge/Build-Gradle%20Kotlin%20DSL-02303A?logo=gradle&logoColor=white)
 ![Estado](https://img.shields.io/badge/Estado-Prototipo-orange)
 
+
+<img width="1672" height="941" alt="Rally Latinoamericano EcoSismo Background" src="https://github.com/user-attachments/assets/b14052f3-b1cb-4811-a835-64b3c0ee9c6b" />
+
+
 </div>
 
 ---
@@ -176,11 +180,6 @@ EcoSismo/
 
 ---
 
-## 📖 Referencias
-
-
-
----
 
 <div align="center">
 
