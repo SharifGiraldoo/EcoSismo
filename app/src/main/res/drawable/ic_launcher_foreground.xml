@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Phone silhouette representing repurposed device -->
+    <path
+        android:fillColor="#E0E6ED"
+        android:pathData="M39,26h30c3.31,0 6,2.69 6,6v44c0,3.31 -2.69,6 -6,6H39c-3.31,0 -6,-2.69 -6,-6V32c0,-3.31 2.69,-6 6,-6z" />
+    
+    <!-- Phone Screen area -->
+    <path
+        android:fillColor="#0D1F2D"
+        android:pathData="M37,32h34v38H37z" />
+
+    <!-- Speaker notch and Home indicator -->
+    <path
+        android:fillColor="#9AA5B1"
+        android:pathData="M50,29h8v1.5h-8zM51,75h6v1.5h-6z" />
+
+    <!-- Seismic Seismograph Pulse across the screen in vibrant Amber/Cyan -->
+    <path
+        android:strokeColor="#00E5FF"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000"
+        android:pathData="M38,51 L44,51 L47,43 L50,59 L54,37 L58,57 L61,48 L64,52 L70,52" />
+
+    <!-- Early Alert Beacon / Eco Signal Badge on top corner -->
+    <path
+        android:fillColor="#FF6B6B"
+        android:pathData="M67,23m-4.5,0a4.5,4.5 0 1,0 9,0a4.5,4.5 0 1,0 -9,0" />
+
+    <!-- Radio / Wifi broadcast waves from the antenna/beacon -->
+    <path
+        android:strokeColor="#FFD166"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M73,19c2.2,2.2 2.2,5.8 0,8M76.5,15.5c4.1,4.1 4.1,10.9 0,15" />
+
+    <!-- Circular economy recycling loop leaf badge at bottom corner -->
+    <path
+        android:fillColor="#2EC4B6"
+        android:pathData="M33,70c0,-3.3 2.7,-6 6,-6c0,3.3 -2.7,6 -6,6z" />
+</vector>
