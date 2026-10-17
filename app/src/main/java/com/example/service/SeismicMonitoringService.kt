@@ -54,6 +54,9 @@ class SeismicMonitoringService : Service(), SensorEventListener {
     private var gravityX = 0f
     private var gravityY = 0f
     private var gravityZ = 0f
+    private var isGravityInitialized = false
+    private var monitoringStartTime: Long = 0
+    private var sampleCount: Long = 0
     private val alpha = 0.82f
 
     private var sta = 0.05f
@@ -61,8 +64,8 @@ class SeismicMonitoringService : Service(), SensorEventListener {
     private val staAlpha = 0.15f
     private val ltaAlpha = 0.005f
 
-    var staLtaThreshold: Float = 3.5f
-    var minPgaThresholdMps2: Float = 0.22f
+    var staLtaThreshold: Float = 3.6f
+    var minPgaThresholdMps2: Float = 0.35f
 
     private var lastAlertTimestamp: Long = 0
     private val alertCooldownMs = 8000L
@@ -109,6 +112,10 @@ class SeismicMonitoringService : Service(), SensorEventListener {
     }
 
     private fun startSensorMonitoring() {
+        isGravityInitialized = false
+        monitoringStartTime = System.currentTimeMillis()
+        sampleCount = 0
+        lastAlertTimestamp = System.currentTimeMillis() + 3500L
         accelerometer?.let {
             sensorManager?.registerListener(
                 this,
@@ -135,6 +142,19 @@ class SeismicMonitoringService : Service(), SensorEventListener {
         val rawX = event.values[0]
         val rawY = event.values[1]
         val rawZ = event.values[2]
+
+        if (!isGravityInitialized) {
+            gravityX = rawX
+            gravityY = rawY
+            gravityZ = rawZ
+            isGravityInitialized = true
+            sta = 0.02f
+            lta = 0.02f
+            _latestReading.value = SeismicReading(0f, 0f, 0f, 0.01f, 1.0f)
+            return
+        }
+
+        sampleCount++
 
         gravityX = alpha * gravityX + (1 - alpha) * rawX
         gravityY = alpha * gravityY + (1 - alpha) * rawY
@@ -164,7 +184,10 @@ class SeismicMonitoringService : Service(), SensorEventListener {
         val now = System.currentTimeMillis()
         val currentThreshold = configuredStaLtaThreshold
         val currentMinPga = configuredMinPgaThresholdMps2
-        if (ratio >= currentThreshold && pga >= currentMinPga && (now - lastAlertTimestamp > alertCooldownMs)) {
+
+        // Calibrated baseline: only trigger alerts when calibrated and genuine abnormal movements occur
+        val isCalibrated = sampleCount > 40 && (now - monitoringStartTime) > 2500L
+        if (isCalibrated && ratio >= currentThreshold && pga >= currentMinPga && (now - lastAlertTimestamp > alertCooldownMs)) {
             lastAlertTimestamp = now
             triggerSeismicAlert(pga, ratio)
         }
@@ -343,10 +366,10 @@ class SeismicMonitoringService : Service(), SensorEventListener {
         val alertEvents: SharedFlow<SeismicAlert> = _alertEvents.asSharedFlow()
 
         @Volatile
-        var configuredStaLtaThreshold: Float = 3.2f
+        var configuredStaLtaThreshold: Float = 3.6f
 
         @Volatile
-        var configuredMinPgaThresholdMps2: Float = 0.20f
+        var configuredMinPgaThresholdMps2: Float = 0.35f
 
         fun start(context: Context) {
             val intent = Intent(context, SeismicMonitoringService::class.java).apply {
