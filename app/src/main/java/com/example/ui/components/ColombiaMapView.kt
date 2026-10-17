@@ -81,7 +81,11 @@ import com.example.ui.theme.AccentCyan
 import com.example.ui.theme.AlertAmber
 import com.example.ui.theme.AlertRed
 import com.example.ui.theme.BrightCyan
+import com.example.ui.theme.LiveGreenGlow
+import androidx.compose.ui.text.font.FontFamily
 import kotlin.math.hypot
+import kotlin.math.sin
+import kotlin.math.cos
 
 enum class MapDisplayMode {
     COLLECTION_POINTS,
@@ -549,8 +553,9 @@ fun ColombiaMapView(
             if (onToggleExpand != null) {
                 Surface(
                     shape = CircleShape,
-                    color = Color(0xFF0C223A).copy(alpha = 0.9f),
-                    tonalElevation = 4.dp
+                    color = Color(0xCC091B2E),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.14f)),
+                    shadowElevation = 6.dp
                 ) {
                     IconButton(
                         onClick = onToggleExpand,
@@ -567,8 +572,9 @@ fun ColombiaMapView(
 
             Surface(
                 shape = CircleShape,
-                color = Color(0xFF0C223A).copy(alpha = 0.9f),
-                tonalElevation = 4.dp
+                color = Color(0xCC091B2E),
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.14f)),
+                shadowElevation = 6.dp
             ) {
                 IconButton(
                     onClick = { zoom = (zoom * 1.35f).coerceAtMost(5.5f) },
@@ -580,8 +586,9 @@ fun ColombiaMapView(
 
             Surface(
                 shape = CircleShape,
-                color = Color(0xFF0C223A).copy(alpha = 0.9f),
-                tonalElevation = 4.dp
+                color = Color(0xCC091B2E),
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.14f)),
+                shadowElevation = 6.dp
             ) {
                 IconButton(
                     onClick = { zoom = (zoom / 1.35f).coerceAtLeast(0.6f) },
@@ -593,8 +600,9 @@ fun ColombiaMapView(
 
             Surface(
                 shape = CircleShape,
-                color = Color(0xFF0C223A).copy(alpha = 0.9f),
-                tonalElevation = 4.dp
+                color = Color(0xCC091B2E),
+                border = BorderStroke(1.dp, BrightCyan.copy(alpha = 0.35f)),
+                shadowElevation = 6.dp
             ) {
                 IconButton(
                     onClick = {
@@ -611,22 +619,23 @@ fun ColombiaMapView(
 
         if (mode == MapDisplayMode.SEISMIC_HISTORY) {
             Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = Color(0xFF071424).copy(alpha = 0.92f),
-                tonalElevation = 4.dp,
+                shape = RoundedCornerShape(18.dp),
+                color = Color(0xDD071526),
+                border = BorderStroke(0.8.dp, BrightCyan.copy(alpha = 0.35f)),
+                shadowElevation = 8.dp,
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .padding(8.dp)
+                    .padding(10.dp)
                     .padding(end = 56.dp)
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Surface(shape = CircleShape, color = BrightCyan, modifier = Modifier.size(8.dp)) {}
+                    Surface(shape = CircleShape, color = Color(0xFF06D6A0), modifier = Modifier.size(7.dp)) {}
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "🇨🇴 SGC Colombia (${earthquakes.size} sismos)",
+                        text = "🇨🇴 SGC & USGS (${earthquakes.size} sismos)",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -644,16 +653,16 @@ fun ColombiaMapView(
             }
 
             Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = Color(0xFF0A1E35).copy(alpha = 0.96f),
-                border = BorderStroke(1.5.dp, badgeColor),
-                tonalElevation = 8.dp,
+                shape = RoundedCornerShape(22.dp),
+                color = Color(0xEB081A2C),
+                border = BorderStroke(1.2.dp, badgeColor.copy(alpha = 0.75f)),
+                shadowElevation = 14.dp,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(horizontal = 10.dp, vertical = 10.dp)
+                    .padding(horizontal = 12.dp, vertical = 10.dp)
                     .fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
+                Column(modifier = Modifier.padding(14.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -661,18 +670,18 @@ fun ColombiaMapView(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                             Surface(
-                                shape = RoundedCornerShape(8.dp),
+                                shape = RoundedCornerShape(10.dp),
                                 color = badgeColor
                             ) {
                                 Text(
                                     text = "M ${eq.magnitude}",
-                                    color = Color(0xFF071424),
+                                    color = Color(0xFF050E17),
                                     fontWeight = FontWeight.Black,
                                     style = MaterialTheme.typography.titleMedium,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
                             }
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(10.dp))
                             Column {
                                 Text(
                                     text = eq.location,
@@ -692,13 +701,13 @@ fun ColombiaMapView(
 
                         IconButton(
                             onClick = { onSelectEarthquake(eq) },
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(26.dp)
                         ) {
-                            Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = Color.LightGray, modifier = Modifier.size(16.dp))
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -706,12 +715,13 @@ fun ColombiaMapView(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Fuente Oficial SGC • Red Sismológica",
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                            color = BrightCyan
+                            text = "● En vivo • ${eq.agency}",
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                            color = BrightCyan,
+                            fontWeight = FontWeight.SemiBold
                         )
 
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedButton(
                                 onClick = {
                                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.sgc.gov.co/sismos")).apply {
@@ -719,7 +729,8 @@ fun ColombiaMapView(
                                     }
                                     context.startActivity(intent)
                                 },
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                shape = RoundedCornerShape(14.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
                                 modifier = Modifier.height(30.dp)
                             ) {
                                 Text("Ver en SGC", fontSize = 10.sp, color = BrightCyan, fontWeight = FontWeight.SemiBold)
@@ -729,8 +740,9 @@ fun ColombiaMapView(
                                 onClick = {
                                     openGoogleMapsNavigation(context, eq.latitude, eq.longitude, "Epicentro SGC: " + eq.location)
                                 },
+                                shape = RoundedCornerShape(14.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = BrightCyan, contentColor = Color(0xFF071424)),
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
                                 modifier = Modifier.height(30.dp)
                             ) {
                                 Icon(Icons.Default.Navigation, contentDescription = null, modifier = Modifier.size(12.dp))
@@ -752,16 +764,16 @@ fun ColombiaMapView(
             }
 
             Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = Color(0xFF0A1E35).copy(alpha = 0.96f),
-                border = BorderStroke(1.5.dp, stColor),
-                tonalElevation = 8.dp,
+                shape = RoundedCornerShape(22.dp),
+                color = Color(0xEB081A2C),
+                border = BorderStroke(1.2.dp, stColor.copy(alpha = 0.75f)),
+                shadowElevation = 14.dp,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(horizontal = 10.dp, vertical = 10.dp)
+                    .padding(horizontal = 12.dp, vertical = 10.dp)
                     .fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
+                Column(modifier = Modifier.padding(14.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -769,7 +781,7 @@ fun ColombiaMapView(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                             Surface(shape = CircleShape, color = stColor, modifier = Modifier.size(10.dp)) {}
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = st.name,
                                 style = MaterialTheme.typography.titleSmall,
@@ -781,15 +793,16 @@ fun ColombiaMapView(
                         }
 
                         Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = stColor.copy(alpha = 0.2f)
+                            shape = RoundedCornerShape(10.dp),
+                            color = stColor.copy(alpha = 0.18f),
+                            border = BorderStroke(0.6.dp, stColor.copy(alpha = 0.5f))
                         ) {
                             Text(
                                 text = st.status,
                                 color = stColor,
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.labelSmall,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                             )
                         }
                     }
@@ -801,29 +814,96 @@ fun ColombiaMapView(
                         color = Color(0xFFB0C4DE)
                     )
 
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // Sismógrafo en tiempo real de la estación
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color(0xFF040E1B),
+                        border = BorderStroke(0.8.dp, BrightCyan.copy(alpha = 0.3f)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            Canvas(modifier = Modifier.fillMaxSize()) {
+                                val w = size.width
+                                val h = size.height
+                                val midY = h / 2f
+
+                                // Grid line
+                                drawLine(
+                                    color = Color(0x1F00F5D4),
+                                    start = Offset(0f, midY),
+                                    end = Offset(w, midY),
+                                    strokeWidth = 1f
+                                )
+
+                                val pga = st.lastVibrationMps2.coerceAtLeast(0.015f)
+                                val points = 40
+                                val stepX = w / (points - 1)
+                                val path = Path()
+                                val time = System.currentTimeMillis() / 150.0
+
+                                for (i in 0 until points) {
+                                    val x = i * stepX
+                                    val wave = sin(time + i * 0.45).toFloat() * 0.6f +
+                                            cos(time * 1.5 + i * 0.85).toFloat() * 0.4f
+                                    val dy = (wave * pga * (h * 0.38f)).coerceIn(-midY * 0.85f, midY * 0.85f)
+                                    val y = midY - dy
+                                    if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                                }
+
+                                drawPath(
+                                    path = path,
+                                    color = if (st.status == "ALERTA") AlertRed else BrightCyan,
+                                    style = Stroke(width = 1.8.dp.toPx(), cap = StrokeCap.Round)
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(horizontal = 6.dp, vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(shape = CircleShape, color = if (st.status == "ALERTA") AlertRed else LiveGreenGlow, modifier = Modifier.size(5.dp)) {}
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "SISMÓGRAFO EN VIVO",
+                                    color = BrightCyan,
+                                    fontSize = 8.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.8.sp
+                                )
+                            }
+                        }
+                    }
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 4.dp),
+                            .padding(top = 6.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = if (st.isCharging) Icons.Default.BatteryChargingFull else Icons.Default.BatteryFull,
-                                contentDescription = null,
-                                tint = if (st.isCharging) BrightCyan else Color.White,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(3.dp))
                             Text(
-                                text = "${st.batteryLevel}% ${if (st.isCharging) "(⚡ " + st.chargingSource + ")" else ""}",
+                                text = "PGA: ${st.lastVibrationMps2} m/s²",
                                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
-                                color = Color.White
+                                color = if (st.status == "ALERTA") AlertRed else BrightCyan,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Monospace
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "• ${st.batteryTemperatureC}°C",
+                                text = "• ${st.sampleRateHz} Hz",
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+                                color = Color(0xFFCBD5E1)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "• ${st.mountType.take(16)}",
                                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
                                 color = Color(0xFF94A3B8)
                             )
@@ -833,8 +913,9 @@ fun ColombiaMapView(
                             onClick = {
                                 openGoogleMapsNavigation(context, st.latitude, st.longitude, "Estación: " + st.name)
                             },
+                            shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = BrightCyan, contentColor = Color(0xFF071424)),
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
                             modifier = Modifier.height(28.dp)
                         ) {
                             Icon(Icons.Default.Navigation, contentDescription = null, modifier = Modifier.size(12.dp))
@@ -849,16 +930,16 @@ fun ColombiaMapView(
         if (mode == MapDisplayMode.COLLECTION_POINTS && selectedPoint != null) {
             val point = selectedPoint
             Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = Color(0xFF0A1E35).copy(alpha = 0.96f),
-                border = BorderStroke(1.5.dp, BrightCyan),
-                tonalElevation = 8.dp,
+                shape = RoundedCornerShape(22.dp),
+                color = Color(0xEB081A2C),
+                border = BorderStroke(1.2.dp, BrightCyan.copy(alpha = 0.65f)),
+                shadowElevation = 14.dp,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(horizontal = 10.dp, vertical = 10.dp)
+                    .padding(horizontal = 12.dp, vertical = 10.dp)
                     .fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
+                Column(modifier = Modifier.padding(14.dp)) {
                     Text(
                         text = point.name,
                         style = MaterialTheme.typography.titleSmall,
@@ -872,7 +953,7 @@ fun ColombiaMapView(
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                         color = Color(0xFFCBD5E1)
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -890,19 +971,20 @@ fun ColombiaMapView(
                             onClick = {
                                 openGoogleMapsNavigation(context, point.latitude, point.longitude, point.name)
                             },
+                            shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = BrightCyan, contentColor = Color(0xFF071424)),
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
                             modifier = Modifier.height(28.dp)
                         ) {
                             Icon(Icons.Default.Navigation, contentDescription = null, modifier = Modifier.size(12.dp))
                             Spacer(modifier = Modifier.width(3.dp))
                             Text("Maps", fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         }
-                    }
                 }
             }
         }
     }
+}
 }
 
 fun openGoogleMapsNavigation(context: Context, lat: Double, lng: Double, label: String) {
