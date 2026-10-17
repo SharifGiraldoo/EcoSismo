@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🌎 Ecosismo
+# 🌎 EcoSismo
 
 ### Red Móvil Circular de Alerta Temprana
 
@@ -8,13 +8,13 @@
 
 Solución propuesta para el **Rally Latinoamericano de Innovación 2026**
 
-
+![Kotlin](https://img.shields.io/badge/Kotlin-2.2-7F52FF?logo=kotlin&logoColor=white)
+![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white)
+![Firebase](https://img.shields.io/badge/Cloud-Firebase%20Firestore-FFCA28?logo=firebase&logoColor=black)
 ![Kotlin DSL](https://img.shields.io/badge/Build-Gradle%20Kotlin%20DSL-02303A?logo=gradle&logoColor=white)
-![Estado](https://img.shields.io/badge/Estado-Prototipo-orange)
-
+![Estado](https://img.shields.io/badge/Estado-Prototipo%20funcional-orange)
 
 <img width="1672" height="941" alt="Rally Latinoamericano EcoSismo Background" src="https://github.com/user-attachments/assets/b14052f3-b1cb-4811-a835-64b3c0ee9c6b" />
-
 
 </div>
 
@@ -24,15 +24,19 @@ Solución propuesta para el **Rally Latinoamericano de Innovación 2026**
 
 - [Descripción de la problemática](#-descripción-de-la-problemática)
 - [Antecedentes](#-antecedentes)
-- [La propuesta: Ecosismo](#-la-propuesta-ecosismo)
+- [La propuesta: EcoSismo](#-la-propuesta-ecosismo)
 - [Funcionalidades](#-funcionalidades)
+- [Novedades de la versión final](#-novedades-de-la-versión-final)
 - [¿Cómo funciona?](#️-cómo-funciona)
+- [Modos de conexión](#-modos-de-conexión)
+- [Fuentes de datos](#-fuentes-de-datos)
+- [Arquitectura y tecnologías](#️-arquitectura-y-tecnologías)
+- [Integración con Firebase](#-integración-con-firebase)
 - [Necesidades para su implementación](#-necesidades-para-su-implementación)
 - [¿Por qué es una buena solución?](#-por-qué-es-una-buena-solución)
 - [Diferenciador](#-diferenciador)
 - [Instalación](#-instalación)
 - [Estructura del repositorio](#-estructura-del-repositorio)
-
 
 ---
 
@@ -73,116 +77,38 @@ La mayoría de estos estudios depende de **celulares que viajan dentro de vehíc
 
 ---
 
-## 💡 La propuesta: Ecosismo
+## 💡 La propuesta: EcoSismo
 
-**Ecosismo** es una aplicación móvil que funciona en cualquier dispositivo, **sin instalación obligatoria**, y que da una segunda vida a celulares en desuso para **acercar la información sísmica a la comunidad**. Funciona **con internet y también sin él**.
+**EcoSismo** es una aplicación Android que da una segunda vida a celulares en desuso para **acercar la información sísmica a la comunidad**. Funciona **con internet y también sin él**, y permite sincronizar estaciones y registros en la nube cuando hay conexión.
+
+La app se organiza en tres secciones principales:
+
+| Pestaña | Qué ofrece |
+|---|---|
+| ♻️ **Puntos de Recolección** | Mapa de lugares donde donar celulares, con ruta "Cómo llegar" y registro de donaciones. |
+| 🌐 **Historial Sísmico** | Eventos sísmicos recientes de Colombia (magnitud, profundidad, ubicación) y acceso al visor oficial del SGC. |
+| 📡 **Estaciones** | Red de estaciones de monitoreo, forma de onda en tiempo real, detección STA/LTA y telemetría del dispositivo. |
 
 ---
 
 ## ✨ Funcionalidades
 
-- 🗺️ **Mapa de puntos de recolección y estaciones** en Armenia, Pereira, Cali, Medellín, Ibagué, Manizales, Bogotá, Bucaramanga, Quibdó y Neiva.
+- 🗺️ **Mapa interactivo de Colombia** con puntos de recolección y estaciones en Armenia, Pereira, Cali, Medellín, Ibagué, Manizales, Bogotá, Bucaramanga, Quibdó y Neiva.
 - 📍 **"Cómo llegar"** a cada punto mediante integración con Google Maps.
-- 📊 **Historial sísmico de Colombia**: magnitud, profundidad y ubicación de los eventos.
+- 📊 **Historial sísmico de Colombia** con datos de catálogos internacionales (USGS y EMSC).
 - 🏛️ **Visor oficial del SGC** (Servicio Geológico Colombiano) integrado en la app.
-- 📡 **Modo estación**: los celulares recolectados se instalan como estaciones fijas que miden vibraciones con **acelerómetro y giroscopio** y envían los datos por **Wi-Fi, datos móviles, conexión satelital y GPRS**.
-- 📴 **Funcionamiento offline** para las consultas principales.
+- 📡 **Modo estación**: el celular mide vibraciones con su **acelerómetro y giroscopio** mediante un servicio en primer plano que sigue activo con la app en segundo plano.
+- 📈 **Forma de onda sísmica en vivo** y cálculo de **PGA** (aceleración máxima del suelo, en m/s²).
+- 🚨 **Detección de eventos con algoritmo STA/LTA** (promedio de corto plazo / largo plazo) con sensibilidad ajustable y notificación de alerta.
+- 🔋 **Telemetría real del dispositivo**: nivel y estado de la batería, fuente de carga (AC, USB, inalámbrica), temperatura, voltaje, salud de la batería y ubicación.
+- ☁️ **Sincronización en la nube con Firebase** e inicio de sesión con Google.
+- 📴 **Funcionamiento offline** con base de datos local y sincronización automática de datos pendientes al recuperar la conexión.
+- 🌗 **Tema claro y oscuro** según la configuración del sistema (con colores dinámicos en Android 12+).
+- 📱 **Interfaz adaptable**: en pantallas anchas (tablets o modo horizontal) el mapa y el panel de la estación se muestran lado a lado.
 
 ---
 
-## ⚙️ ¿Cómo funciona?
+## 🆕 Novedades de la versión final
 
-```mermaid
-flowchart LR
-    A[👤 Ciudadano con<br/>celular en desuso] -->|Lo dona en| B[📍 Punto de recolección]
-    B --> C[🔧 Acondicionamiento<br/>energía + conectividad]
-    C --> D[📱 Estación sísmica fija<br/>acelerómetro + giroscopio]
-    D -->|Wi-Fi / datos móviles| E[(☁️ Datos de vibración)]
-    E --> F[📲 App Ecosismo]
-    G[🏛️ SGC<br/>información oficial] --> F
-    F --> H[👥 Comunidad informada]
-```
-
-1. **Recolección:** la app muestra en el mapa los puntos donde las personas pueden donar sus celulares viejos.
-2. **Reutilización:** los equipos recolectados se instalan como estaciones fijas con energía y comunicación propias.
-3. **Medición:** cada estación registra vibraciones con sus sensores internos y envía los datos.
-4. **Información:** la comunidad consulta en un solo lugar el historial sísmico, el visor oficial del SGC y la red de estaciones.
-
----
-
-## 🤝 Necesidades para su implementación
-
-- 📱 **Celulares donados** por la comunidad.
-- 🔌 **Energía eléctrica** para mantener las estaciones activas.
-- 🏛️ **Alianzas con alcaldías** para la instalación y operación de los puntos.
-
----
-
-## ✅ ¿Por qué es una buena solución?
-
-- 💰 **Reduce el costo de medir** frente a instrumentos especializados.
-- ♻️ **Reutiliza residuos electrónicos**, aportando a la economía circular.
-- 📢 **Informa a la comunidad en un solo lugar.**
-
----
-
-## 🌟 Diferenciador
-
-Otras aplicaciones **solo informan** o **usan celulares en movimiento**. Ecosismo **une recolección, estaciones fijas e información oficial** en una misma plataforma.
-
-> **Ecosismo complementa al SGC, no lo reemplaza.**
-
----
-
-## 📲 Instalación
-
-### Opción 1: APK (recomendada para probar)
-
-1. Descarga [`Ecosismo.apk`](./Ecosismo.apk) desde este repositorio.
-2. En tu dispositivo Android, permite la instalación desde orígenes desconocidos.
-3. Abre el archivo y sigue las instrucciones.
-
-### Opción 2: Compilar desde el código fuente
-
-**Requisitos:** Android Studio y JDK 17 o superior.
-
-```bash
-git clone https://github.com/SharifGiraldoo/EcoSismo.git
-cd EcoSismo
-```
-
-1. Copia el archivo de variables de entorno (opcional, solo si se usan funciones con la API de Gemini):
-```bash
-   cp .env.example .env
-```
-   y descomenta/configura `GEMINI_API_KEY`.
-2. Abre el proyecto en Android Studio y sincroniza Gradle.
-3. Ejecuta en un emulador o dispositivo, o compila desde terminal:
-```bash
-   ./gradlew assembleDebug
-```
-
----
-
-## 📁 Estructura del repositorio
-
-```
-EcoSismo/
-├── app/                  # Código fuente de la aplicación Android
-├── gradle/               # Wrapper y configuración de Gradle
-├── .env.example          # Plantilla de variables de entorno
-├── Ecosismo.apk          # APK listo para instalar
-├── build.gradle.kts      # Configuración de build (raíz)
-├── settings.gradle.kts   # Configuración de módulos
-├── gradle.properties     # Propiedades de Gradle
-└── metadata.json         # Metadatos del proyecto
-```
-
----
-
-
-<div align="center">
-
-Hecho con 💚 para el **Rally Latinoamericano de Innovación 2026**
-
-</div>
+- ☁️ **Integración con Firebase**: autenticación con Google (Credential Manager) y almacenamiento en **Cloud Firestore** de usuarios, estaciones y registros sísmicos.
+- 🔐 **Reglas de seguridad de Firestore**: solo usuarios autenticados pueden leer, y cada quien solo puede modificar sus propias
